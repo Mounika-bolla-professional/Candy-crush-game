@@ -86,7 +86,7 @@ public class CandyCrushGame {
             System.out.println("3. Undo Last Move");
             System.out.println("4. Show & Export Leaderboard");
             System.out.println("5. Refill Lives");
-            System.out.println("6. List User Scores by Level & Export Stats");
+            System.out.println("6. List User Scores by Level");
             System.out.println("0. Exit");
 
             System.out.print("Choose option: ");
@@ -118,9 +118,7 @@ public class CandyCrushGame {
                     break;
 
                 case 6:
-                    // show per-level scores + export stats
                     listUserScoresByLevel();
-                    exportPlayerLevelStats();
                     break;
 
                 case 0:
@@ -477,81 +475,6 @@ public class CandyCrushGame {
             if (!hasAnyScore) {
                 System.out.println("  (no scores yet)");
             }
-        }
-    }
-
-    // Aggregated export: one row per player+level, ONLY Player,Level,BestScore
-    static void exportPlayerLevelStats() {
-
-        File file = new File("scores.csv");
-
-        if (!file.exists()) {
-            System.out.println("No scores.csv file found. Nothing to aggregate.");
-            return;
-        }
-
-        // Map key: playerName + "#" + level, value: bestScore
-        Map<String, Integer> bestPerLevel = new LinkedHashMap<>();
-
-        // Read scores.csv and recompute best per player+level
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-
-            String line;
-            while ((line = br.readLine()) != null) {
-
-                String[] data = line.split(",");
-                if (data.length < 3) continue;
-
-                String name = data[0];
-                int level;
-                int score;
-                try {
-                    level = Integer.parseInt(data[1]);
-                    score = Integer.parseInt(data[2]);
-                } catch (NumberFormatException e) {
-                    continue;
-                }
-
-                String key = name + "#" + level;
-
-                Integer currentBest = bestPerLevel.get(key);
-                if (currentBest == null || score > currentBest) {
-                    bestPerLevel.put(key, score);
-                }
-            }
-
-        } catch (IOException e) {
-            System.out.println("Error reading scores.csv for aggregation.");
-            return;
-        }
-
-        if (bestPerLevel.isEmpty()) {
-            System.out.println("No data to export from scores.csv.");
-            return;
-        }
-
-        // Write Player,Level,BestScore (no TimesPlayed column)
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter("player_level_stats.csv"))) {
-
-            bw.write("Player,Level,BestScore");
-            bw.newLine();
-
-            for (Map.Entry<String, Integer> entry : bestPerLevel.entrySet()) {
-                String key = entry.getKey();
-                int bestScore = entry.getValue();
-
-                int hashIndex = key.indexOf('#');
-                String name = key.substring(0, hashIndex);
-                int level = Integer.parseInt(key.substring(hashIndex + 1));
-
-                bw.write(name + "," + level + "," + bestScore);
-                bw.newLine();
-            }
-
-            System.out.println("Player-level stats exported to player_level_stats.csv.");
-
-        } catch (IOException e) {
-            System.out.println("Error writing player_level_stats.csv.");
         }
     }
 }
